@@ -1,0 +1,117 @@
+﻿<Window x:Class="FtpClientWindow.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:FtpClientWindow"
+        Title="FTP Client" Height="600" Width="800">
+
+
+	
+	<!-- 定义资源 -->
+	<Window.Resources>
+		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+		<local:IsDirectoryToStringConverter x:Key="IsDirectoryToStringConverter"/>
+	</Window.Resources>
+
+	<DockPanel>
+		<!-- Menu -->
+		<Menu DockPanel.Dock="Top">
+			<MenuItem Header="File">
+				<MenuItem Header="Connect" Click="ConnectButton_Clicked"/>
+				<MenuItem Header="Disconnect" Click="DisconnectButton_Clicked"/>
+				<MenuItem Header="Upload" Click="UploadButton_Clicked"/>
+				<MenuItem Header="Download" Click="DownloadButton_Clicked"/>
+			</MenuItem>
+		</Menu>
+
+		<!-- Toolbar -->
+		<ToolBar DockPanel.Dock="Top">
+			<CheckBox Content="Show Details" IsChecked="{Binding ShowDetails}"/>
+			<TextBox Name="CurrentDirectoryText" 
+					 Text="{Binding CurrentDirectory, UpdateSourceTrigger=PropertyChanged}" 
+					 Width="300" 
+					 KeyDown="CurrentDirectory_KeyDown"/>
+		</ToolBar>
+
+		<!-- Tab Control -->
+		<TabControl DockPanel.Dock="Top">
+			<!-- First Tab: Directory and Files -->
+			<TabItem Header="FTP Browser">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+						<RowDefinition Height="Auto"/>
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+
+					<!-- File List -->
+					<ListBox Name="FileList" 
+							 Grid.Row="1" Grid.Column="1"
+							 MouseDoubleClick="FileList_MouseDoubleClick"
+							 SelectionMode="Extended">
+						
+						<ListBox.Resources>
+							<DataTemplate x:Key="DetailedTemplate">
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Text="{Binding Permissions}" Width="100"/>
+									<TextBlock Text="{Binding LinkCount}" Width="50"/>
+									<TextBlock Text="{Binding Owner}" Width="100"/>
+									<TextBlock Text="{Binding Group}" Width="100"/>
+									<TextBlock Text="{Binding Size}" Width="100"/>
+									<TextBlock Text="{Binding LastModified}" Width="150"/>
+									<TextBlock Text="{Binding Name}" Width="200"/>
+									<TextBlock Text="{Binding IsDirectory, Converter={StaticResource IsDirectoryToStringConverter}}" Width="100"/>
+								</StackPanel>
+							</DataTemplate>
+							<DataTemplate x:Key="SimpleTemplate">
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Text="{Binding LastModified}" Width="150"/>
+									<TextBlock Text="{Binding Name}" Width="200"/>
+									<TextBlock Text="{Binding IsDirectory, Converter={StaticResource IsDirectoryToStringConverter}}" Width="100"/>
+									<TextBlock Text="{Binding Size}" Width="100"/>
+								</StackPanel>
+							</DataTemplate>
+						</ListBox.Resources>
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<ContentControl Content="{Binding}">
+									<ContentControl.Style>
+										<Style TargetType="ContentControl">
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding Path=ShowDetails, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+													<Setter Property="ContentTemplate" Value="{StaticResource DetailedTemplate}"/>
+												</DataTrigger>
+												<DataTrigger Binding="{Binding Path=ShowDetails, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+													<Setter Property="ContentTemplate" Value="{StaticResource SimpleTemplate}"/>
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</ContentControl.Style>
+								</ContentControl>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+
+					<!-- Log Box -->
+					<TextBox Name="LogBox" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                             Height="100" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+				</Grid>
+			</TabItem>
+
+			<!-- Second Tab: Terminal -->
+			<TabItem Header="Terminal">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="*"/>
+						<RowDefinition Height="Auto"/>
+					</Grid.RowDefinitions>
+
+					<TextBox Name="TerminalInput" Grid.Row="0" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+					<Button Name="SendCommandButton" Grid.Row="1" Content="Send Command" Click="SendCommandButton_Click"/>
+				</Grid>
+			</TabItem>
+		</TabControl>
+	</DockPanel>
+</Window>
