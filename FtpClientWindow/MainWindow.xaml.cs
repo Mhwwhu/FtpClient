@@ -50,7 +50,8 @@ namespace FtpClientWindow
 
 		public void PrintCommand(string cmd)
 		{
-			LogMessage(">>> " +  cmd);
+			LogMessage(">>> " +  cmd + "\n");
+			AppendText(">>> " + cmd + "\n", Brushes.Black);
 		}
 
 		public void HandleResponseData(CommandDataPair cdp)
@@ -61,6 +62,13 @@ namespace FtpClientWindow
 					RefreshDirectory(cdp.Data);
 					break;
 			}
+		}
+
+		public FileExistsNotifyChoice HandleFileExists(string filePath)
+		{
+			var notifyWindow = new FileExistsNotifyWindow();
+			notifyWindow.ShowDialog();
+			return notifyWindow.Choice;
 		}
 
 		private void ConnectButton_Clicked(object sender, RoutedEventArgs e)
@@ -136,7 +144,7 @@ namespace FtpClientWindow
 
 				try
 				{
-					_ftpClient.DownloadFile(localFile, remoteFile);
+					_ftpClient.DownloadFile(remoteFile, localFile);
 				}
 				catch (Exception ex)
 				{
@@ -164,7 +172,7 @@ namespace FtpClientWindow
 
 		private void LogMessage(string message)
 		{
-			LogBox.AppendText($"{message}\n");
+			LogBox.AppendText($"{message}");
 			LogBox.ScrollToEnd();
 		}
 

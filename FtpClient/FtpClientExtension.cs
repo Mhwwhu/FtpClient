@@ -52,9 +52,21 @@ namespace Client
 
 			if (client.FileExists(remoteFilePath))
 			{
-				fileOffset = client.GetFileSize(remoteFilePath);
-				client.SendCommand($"REST {fileOffset}");
-				client.ReadResponse(_defaultBufferSize);
+				switch (client.FileExistsHandler(remoteFilePath)) 
+				{
+					// 断点续传
+					case FileExistsNotifyChoice.Resume:
+						fileOffset = client.GetFileSize(remoteFilePath);
+						client.SendCommand($"REST {fileOffset}");
+						client.ReadResponse(_defaultBufferSize);
+						break;
+					// 覆盖
+					case FileExistsNotifyChoice.Overwrite:
+						break;
+					// 跳过
+					case FileExistsNotifyChoice.Skip:
+						return;
+				}
 			}
 
 			client.SetTransferType("I");
@@ -81,12 +93,25 @@ namespace Client
 		public static void DownloadFile(this FtpClient client, string remoteFilePath, string localFilePath)
 		{
 			long fileOffset = 0;
-
+			FileMode fileMode = FileMode.Append;
 			if (File.Exists(localFilePath))
 			{
-				fileOffset = new FileInfo(localFilePath).Length;
-				client.SendCommand($"REST {fileOffset}");
-				client.ReadResponse(_defaultBufferSize);
+				switch (client.FileExistsHandler(localFilePath))
+				{
+					// 断点续传
+					case FileExistsNotifyChoice.Resume:
+						fileOffset = new FileInfo(localFilePath).Length;
+						client.SendCommand($"REST {fileOffset}");
+						client.ReadResponse(_defaultBufferSize);
+						break;
+					// 覆盖
+					case FileExistsNotifyChoice.Overwrite:
+						fileMode = FileMode.Open;
+						break;
+					// 跳过
+					case FileExistsNotifyChoice.Skip:
+						return;
+				}
 			}
 
 			client.SetTransferType("I");
@@ -94,7 +119,7 @@ namespace Client
 			client.SendCommand($"RETR {remoteFilePath}");
 			client.ReadResponse(_defaultBufferSize);
 
-			using (FileStream fs = new FileStream(localFilePath, FileMode.Append, FileAccess.Write))
+			using (FileStream fs = new FileStream(localFilePath, fileMode, FileAccess.Write))
 			{
 				byte[] fileBuffer = new byte[_defaultBufferSize];
 				int bytesRead;

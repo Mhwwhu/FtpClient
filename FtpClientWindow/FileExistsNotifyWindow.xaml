@@ -1,0 +1,13 @@
+﻿<Window x:Class="FtpClientWindow.FileExistsNotifyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="File Conflict" Height="200" Width="400">
+	<StackPanel>
+		<TextBlock Text="The file already exists. What would you like to do?" Margin="10" TextWrapping="Wrap"/>
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+			<Button Name="OverwriteButton" Content="Overwrite" Width="100" Margin="5" Click="OverwriteButton_Click"/>
+			<Button Name="ResumeButton" Content="Resume" Width="100" Margin="5" Click="ResumeButton_Click"/>
+			<Button Name="SkipButton" Content="Skip" Width="100" Margin="5" Click="SkipButton_Click"/>
+		</StackPanel>
+	</StackPanel>
+</Window>

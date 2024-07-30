@@ -33,6 +33,7 @@ namespace FtpClientWindow
 			ftpClient.OnCommandSent = mainWindow.PrintCommand;
 			ftpClient.OnResponseReceived = mainWindow.PrintResponse;
 			ftpClient.OnRespDataReceived = mainWindow.HandleResponseData;
+			ftpClient.FileExistsHandler = mainWindow.HandleFileExists;
 			mainWindow.Show();
 		}
 	}

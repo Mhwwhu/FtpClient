@@ -26,6 +26,7 @@ public class FtpClient
 	public Action<string> OnResponseReceived;
 	public Action<string> OnCommandSent;
 	public Action<CommandDataPair> OnRespDataReceived;
+	public Func<string, FileExistsNotifyChoice> FileExistsHandler;
 
 	public FtpClient(ILoggerService logger, DbController dbController)
 	{
