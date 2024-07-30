@@ -6,6 +6,8 @@ using Client;
 using System.Text;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace FtpClientWindow
 {
@@ -14,6 +16,8 @@ namespace FtpClientWindow
 		private readonly FtpClient _ftpClient;
 		private bool _showDetails;
 		private ViewModel _viewModel;
+		private string _terminalInput = "";
+		private int _terminalLastInputStart;
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -41,6 +45,7 @@ namespace FtpClientWindow
 		public void PrintResponse(string resp)
 		{
 			LogMessage("<<< " + resp);
+			AppendText("<<< " + resp, Brushes.Blue);
 		}
 
 		public void PrintCommand(string cmd)
@@ -74,6 +79,13 @@ namespace FtpClientWindow
 					_ftpClient.Login(username, password);
 					_viewModel.CurrentDirectory = _ftpClient.PrintWokingDirectory();
 					_ftpClient.ListDir();
+					var caretPosition = TerminalTextBox.CaretPosition;
+					var lineStart = caretPosition.GetLineStartPosition(0);
+					string currentLine = new TextRange(lineStart, caretPosition).Text;
+					if (!currentLine.StartsWith(">>>"))
+					{
+						AppendText(">>> ", Brushes.Black);
+					}
 				}
 				catch (Exception ex)
 				{
@@ -133,21 +145,7 @@ namespace FtpClientWindow
 			}
 		}
 
-		private void SendCommandButton_Click(object sender, RoutedEventArgs e)
-		{
-			string command = TerminalInput.Text.Trim();
-			if (!string.IsNullOrEmpty(command))
-			{
-				try
-				{
-					_ftpClient.SendCmdAndReadResp(command);
-				}
-				catch (Exception ex)
-				{
-					LogMessage($"Error: {ex.Message}");
-				}
-			}
-		}
+		
 
 		private void RefreshDirectory(byte[] directoryInfo)
 		{
@@ -173,9 +171,17 @@ namespace FtpClientWindow
 			{
 				try
 				{
+					AppendText("\n", Brushes.Black);
 					_ftpClient.ChangeDirectory(selectedItem.Name);
 					_viewModel.CurrentDirectory = _ftpClient.PrintWokingDirectory();
 					_ftpClient.ListDir();
+					var caretPosition = TerminalTextBox.CaretPosition;
+					var lineStart = caretPosition.GetLineStartPosition(0);
+					string currentLine = new TextRange(lineStart, caretPosition).Text;
+					if(!currentLine.StartsWith(">>>"))
+					{
+						AppendText(">>> ", Brushes.Black);
+					}
 				}
 				catch (Exception ex)
 				{
@@ -196,6 +202,49 @@ namespace FtpClientWindow
 				_ftpClient.ListDir();
 				_ftpClient.PrintWokingDirectory();
 			}
+		}
+		private void TerminalTextBox_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.Enter)
+			{
+				e.Handled = true;
+
+				var caretPosition = TerminalTextBox.CaretPosition;
+				var lineStart = caretPosition.GetLineStartPosition(0);
+				string currentLine = new TextRange(lineStart, caretPosition).Text;
+
+				string command = currentLine.TrimStart('>', ' ');
+				AppendText("\n", Brushes.Black);
+				_ftpClient.SendCmdAndReadResp(command);
+				_terminalInput = string.Empty;
+				AppendText(">>> ", Brushes.Black);
+			}
+			else if (e.Key == Key.Back)
+			{
+				var caretPosition = TerminalTextBox.CaretPosition;
+				var lineStart = caretPosition.GetLineStartPosition(0);
+				if (caretPosition.CompareTo(lineStart) == 0)
+				{
+					e.Handled = true; // Prevent deletion of prompt
+				}
+			}
+			else
+			{
+				_terminalInput += e.Key.ToString();
+			}
+		}
+		private void AppendText(string text, Brush color)
+		{
+			var run = new Run(text) { Foreground = color };
+			var paragraph = TerminalTextBox.Document.Blocks.LastBlock as Paragraph;
+			if (paragraph == null)
+			{
+				paragraph = new Paragraph();
+				TerminalTextBox.Document.Blocks.Add(paragraph);
+			}
+			paragraph.Inlines.Add(run);
+			TerminalTextBox.CaretPosition = TerminalTextBox.Document.ContentEnd;
+			TerminalTextBox.ScrollToEnd();
 		}
 	}
 }

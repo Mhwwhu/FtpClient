@@ -5,7 +5,7 @@
         Title="FTP Client" Height="600" Width="800">
 
 
-	
+
 	<!-- 定义资源 -->
 	<Window.Resources>
 		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -25,11 +25,7 @@
 
 		<!-- Toolbar -->
 		<ToolBar DockPanel.Dock="Top">
-			<CheckBox Content="Show Details" IsChecked="{Binding ShowDetails}"/>
-			<TextBox Name="CurrentDirectoryText" 
-					 Text="{Binding CurrentDirectory, UpdateSourceTrigger=PropertyChanged}" 
-					 Width="300" 
-					 KeyDown="CurrentDirectory_KeyDown"/>
+
 		</ToolBar>
 
 		<!-- Tab Control -->
@@ -45,13 +41,16 @@
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="*"/>
 					</Grid.ColumnDefinitions>
-
+					<TextBox Name="CurrentDirectoryText" 
+							 Grid.Row="0" Grid.Column="0"
+							 Text="{Binding CurrentDirectory, UpdateSourceTrigger=PropertyChanged}" 
+							 KeyDown="CurrentDirectory_KeyDown" Margin="80,0,137,0"/>
 					<!-- File List -->
 					<ListBox Name="FileList" 
-							 Grid.Row="1" Grid.Column="1"
+							 Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
 							 MouseDoubleClick="FileList_MouseDoubleClick"
 							 SelectionMode="Extended">
-						
+
 						<ListBox.Resources>
 							<DataTemplate x:Key="DetailedTemplate">
 								<StackPanel Orientation="Horizontal">
@@ -108,8 +107,12 @@
 						<RowDefinition Height="Auto"/>
 					</Grid.RowDefinitions>
 
-					<TextBox Name="TerminalInput" Grid.Row="0" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
-					<Button Name="SendCommandButton" Grid.Row="1" Content="Send Command" Click="SendCommandButton_Click"/>
+					<RichTextBox Name="TerminalTextBox" 
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     FontSize="14"
+                     PreviewKeyDown="TerminalTextBox_KeyDown"/>
 				</Grid>
 			</TabItem>
 		</TabControl>

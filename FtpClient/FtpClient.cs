@@ -77,6 +77,7 @@ public class FtpClient
 	public string SendCmdAndReadResp(string command, int bufferSize = _defaultBufferSize)
 	{
 		SendCommand(command);
+		if (string.IsNullOrEmpty(command) || command.All(char.IsWhiteSpace)) return string.Empty;
 		return ReadResponse(bufferSize);
 	}
 }
