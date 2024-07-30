@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Client.Database;
+using Client.Logger;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -15,19 +17,27 @@ public class FtpClient
 	private const int _defaultBufferSize = 1024;
 	private Socket _controlSocket;
 	private Socket _dataSocket;
+	private const string _tag = "FtpClient";
 
+	public ILoggerService Logger { get; private set; }
+	public DbController Controller { get; private set; }
+	public string HostIp { get; private set; }
+	public int HostId;
 	public Action<string> OnResponseReceived;
 	public Action<string> OnCommandSent;
 	public Action<CommandDataPair> OnRespDataReceived;
 
-	public FtpClient()
+	public FtpClient(ILoggerService logger, DbController dbController)
 	{
 		_controlSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		Logger = logger;
+		Controller = dbController;
 	}
 
-	public bool ControllerConnect(string hostname, int port)
+	public bool ControllerConnect(string hostIp, int port)
 	{
-		_controlSocket.Connect(new IPEndPoint(IPAddress.Parse(hostname), port));
+		_controlSocket.Connect(new IPEndPoint(IPAddress.Parse(hostIp), port));
+		HostIp = hostIp;
 		return ReadResponse(_defaultBufferSize).StartsWith(FtpResponseCode.ServiceReadyForNewUser.ToString());
 	}
 
@@ -63,14 +73,39 @@ public class FtpClient
 		byte[] cmdBytes = Encoding.ASCII.GetBytes((command + "\r\n").ToCharArray());
 		_controlSocket.Send(cmdBytes, cmdBytes.Length, SocketFlags.None);
 		OnCommandSent(command);
+		Logger.Info(_tag + "-SendCommand", command);
+		var server = Controller.GetServerById(HostId);
+		int? id;
+		if (server == null) id = null;
+		else id = server.Id;
+		try
+		{
+			Controller.AddRecord(id, command);
+		}
+		catch (Exception ex)
+		{
+			Logger.Fatal(_tag, ex.Message);
+			throw;
+		}
 	}
 
 	public string ReadResponse(int bufferSize = _defaultBufferSize)
 	{
 		var buffer = new byte[bufferSize];
-		int bytesRead = _controlSocket.Receive(buffer, bufferSize, SocketFlags.None);
+		_controlSocket.ReceiveTimeout = 5000;
+		int bytesRead;
+		try
+		{
+			bytesRead = _controlSocket.Receive(buffer, bufferSize, SocketFlags.None);
+		}
+		catch (SocketException ex)
+		{
+			Logger.Error(_tag, ex.Message);
+			throw;
+		}
 		string response = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 		OnResponseReceived(response);
+		Logger.Info(_tag + "-Response", response);
 		return response;
 	}
 

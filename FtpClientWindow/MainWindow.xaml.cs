@@ -149,7 +149,10 @@ namespace FtpClientWindow
 
 		private void RefreshDirectory(byte[] directoryInfo)
 		{
-			string[] info = Encoding.UTF8.GetString(directoryInfo).Split(['\n', '\r']);
+			string[] info = Encoding.UTF8
+				.GetString(directoryInfo).Split(['\n', '\r'])
+				.Where(line => !line.All(ch => char.IsWhiteSpace(ch) || char.IsControl(ch)))
+				.ToArray();
 			var directoryItems = new List<DirectoryItem>();
 			foreach(var line in info)
 			{

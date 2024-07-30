@@ -12,6 +12,7 @@ namespace Client
 	public static class FtpClientExtension
 	{
 		private static int _defaultBufferSize = 1024;
+		private static string _tag = "FtpClientExtension";
 
 		public static void Login(this FtpClient client, string username, string password)
 		{
@@ -24,6 +25,19 @@ namespace Client
 			if(!resp.StartsWith(((int)FtpResponseCode.UserLoggedIn).ToString()))
 			{
 				throw new Exception(resp);
+			}
+			try
+			{
+				var server = client.Controller.GetServerByIp(client.HostIp, username);
+				if (server == null)
+				{
+					client.Controller.AddServer(client.HostIp, username);
+				}
+				else client.HostId = server!.Id;
+			}
+			catch (Exception e)
+			{
+				client.Logger.Error(_tag, e.Message);
 			}
 		}
 		public static void SetTransferType(this FtpClient client, string type)
@@ -126,7 +140,8 @@ namespace Client
 			{
 				responseData.AddRange(buffer);
 			}
-			client.ReadResponse();
+			if (resp.Split(['\n', '\r']).Length == 1)
+				client.ReadResponse();
 			client.OnRespDataReceived(new CommandDataPair()
 			{ 
 				Command = FtpCommand.LIST, 
